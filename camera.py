@@ -16,7 +16,7 @@ class Camera:
     def move_forwards(self, dist):
         camera_vector = self.get_camera_vector()
         movement_vector = camera_vector.scale(dist)
-        self.position.add(movement_vector)
+        self.position.translate(movement_vector)
 
     def move_backwards(self, dist):
         self.move_forwards(-dist)
@@ -24,15 +24,15 @@ class Camera:
     def move_left(self, dist):
         camera_vector = self.get_camera_vector()
         movement_vector = cross_product(camera_vector, Y_UNIT_VECTOR).scale(dist)
-        self.position.add(movement_vector)
+        self.position.translate(movement_vector)
 
     def move_right(self, dist):
         self.move_left(-dist)
 
     def move_up(self, dist):
         camera_vector = self.get_camera_vector()
-        movement_vector = cross_product(camera_vector, X_UNIT_VECTOR).scale(dist)
-        self.position.add(movement_vector)
+        movement_vector = cross_product(cross_product(Y_UNIT_VECTOR, camera_vector), camera_vector).scale(dist)
+        self.position.translate(movement_vector)
 
     def move_down(self, dist):
         self.move_up(-dist)

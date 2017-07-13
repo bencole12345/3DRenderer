@@ -26,7 +26,7 @@ class Renderer:
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
         self.cubes = []
-        self.cubes.append(Cube((0, 0, 0), 2))
+        self.cubes.append(Cube(Vector3D(-1, -1, -1), Vector3D(1, 1, 1)))
         self.camera = Camera(z=-5)
 
         self.moving_forwards = False

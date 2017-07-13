@@ -11,10 +11,22 @@ class Vector3D:
     def scale(self, magnitude):
         return Vector3D(self.x * magnitude, self.y * magnitude, self.z * magnitude)
 
+    def magnitude(self):
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
+
     def add(self, vec):
+        return Vector3D(self.x + vec.x, self.y + vec.y, self.z + vec.z)
+
+    def subtract(self, vec):
+        return self.add(vec.scale(-1))
+
+    def translate(self, vec):
         self.x += vec.x
         self.y += vec.y
         self.z += vec.z
+
+    def relative_to(self, vec):
+        return self.subtract(vec)
 
 
 def convert_to_components(magnitude, angle_horizontal, angle_vertical):
