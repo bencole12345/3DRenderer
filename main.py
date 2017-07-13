@@ -108,13 +108,12 @@ class Renderer:
 
         pygame.display.update()
 
-    def get_onscreen_position(self, coords):
-        x, y, z = coords
+    def get_onscreen_position(self, world_position):
 
         # Translate relative to camera
-        x_rel = x - self.camera.x
-        y_rel = y - self.camera.y
-        z_rel = z - self.camera.z
+        x_rel = world_position.x - self.camera.position.x
+        y_rel = world_position.y - self.camera.position.y
+        z_rel = world_position.z - self.camera.position.z
 
         # Perform horizontal rotation (about y axis)
         original_angle = math.atan(x_rel / z_rel)

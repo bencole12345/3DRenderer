@@ -1,36 +1,41 @@
 import math
 
+from vector import *
+
 
 class Camera:
 
     def __init__(self, x=0, y=0, z=0):
-        self.x = x
-        self.y = y
-        self.z = z
+        self.position = Vector3D(x, y, z)
         self.angle_vertical = 0
         self.angle_horizontal = 0
 
+    def get_camera_vector(self):
+        return convert_to_components(1, self.angle_horizontal, self.angle_vertical)
+
     def move_forwards(self, dist):
-        self.x += dist * math.sin(self.angle_horizontal) * math.cos(self.angle_vertical)
-        self.y -= dist * math.sin(self.angle_vertical)
-        self.z += dist * math.cos(self.angle_horizontal) * math.cos(self.angle_vertical)
+        camera_vector = self.get_camera_vector()
+        movement_vector = camera_vector.scale(dist)
+        self.position.add(movement_vector)
 
     def move_backwards(self, dist):
         self.move_forwards(-dist)
 
     def move_left(self, dist):
-        self.angle_horizontal -= math.pi / 2
-        self.move_forwards(dist)
-        self.angle_horizontal += math.pi / 2
+        camera_vector = self.get_camera_vector()
+        movement_vector = cross_product(camera_vector, Y_UNIT_VECTOR).scale(dist)
+        self.position.add(movement_vector)
 
     def move_right(self, dist):
         self.move_left(-dist)
 
     def move_up(self, dist):
-        self.y -= dist
+        camera_vector = self.get_camera_vector()
+        movement_vector = cross_product(camera_vector, X_UNIT_VECTOR).scale(dist)
+        self.position.add(movement_vector)
 
     def move_down(self, dist):
-        self.y += dist
+        self.move_up(-dist)
 
     def rotate_up(self, angle):
         self.angle_vertical += angle
