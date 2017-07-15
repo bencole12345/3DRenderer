@@ -6,8 +6,9 @@ from camera import *
 from objects import *
 
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 2000
+WINDOW_HEIGHT = 1500
+RENDER_SIZE = min(WINDOW_WIDTH, WINDOW_HEIGHT) / 2
 FPS = 60
 
 BLACK = (0, 0, 0)
@@ -17,13 +18,14 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 CAMERA_MOVE_SPEED = 2
-CAMERA_ROTATE_SPEED = math.pi / 4
+CAMERA_ROTATE_SPEED = math.pi / 2
 
 
 class Renderer:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.display.set_caption("3DRenderer")
         self.clock = pygame.time.Clock()
         self.cubes = []
         self.cubes.append(Cube(Vector3D(-1, -1, -1), Vector3D(1, 1, 1)))
@@ -96,43 +98,49 @@ class Renderer:
         self.screen.fill(WHITE)
 
         for cube in self.cubes:
-            for vertex in cube.vertices:
-                x_screen, y_screen = self.get_onscreen_position(vertex)
-                # pygame.draw.circle(self.screen, BLACK, (x_screen, y_screen), 3)
+            # for vertex in cube.vertices:
+            #     x_screen, y_screen = self.get_onscreen_position(vertex)
+            #     pygame.draw.circle(self.screen, BLACK, (x_screen, y_screen), 3)
             for edge in cube.edges:
                 start = cube.vertices[edge[0]]
                 end = cube.vertices[edge[1]]
-                x1_screen, y1_screen = self.get_onscreen_position(start)
-                x2_screen, y2_screen = self.get_onscreen_position(end)
-                pygame.draw.line(self.screen, BLACK, (x1_screen, y1_screen), (x2_screen, y2_screen))
+                start_coords = self.get_onscreen_position(start)
+                end_coords = self.get_onscreen_position(end)
+                if start_coords is not None and end_coords is not None:
+                    pygame.draw.line(self.screen, BLACK, start_coords, end_coords, 2)
 
         pygame.display.update()
 
     def get_onscreen_position(self, world_position):
+        """Calculates the pixel coordiates to render the given world coordinates.
+        
+        The algorithm:
+            1. Translate so that coordinates are relative to the camera (subtract the camera's position vector)
+            2. Rotate about the y axis by -self.camera.angle_horizontal
+            3. Rotate about the x axis by -self.camera.angle_horizontal
+        """
 
-        # Translate relative to camera
+        # Translate relative to camera.
         x_rel = world_position.x - self.camera.position.x
         y_rel = world_position.y - self.camera.position.y
         z_rel = world_position.z - self.camera.position.z
 
-        # Perform horizontal rotation (about y axis)
-        original_angle = math.atan(x_rel / z_rel)
-        rotation_angle = -self.camera.angle_horizontal
-        distance = math.sqrt(x_rel**2 + z_rel**2)
-        x_rel = distance * math.sin(original_angle + rotation_angle)
-        z_rel = distance * math.cos(original_angle + rotation_angle)
+        # Use a matrix for each rotation.
+        angle_vertical = -self.camera.angle_vertical
+        angle_horizontal = -self.camera.angle_horizontal
+        y_rotation_matrix = Rotation3D(angle_horizontal, Rotation3D.Y_AXIS)
+        x_rotation_matrix = Rotation3D(angle_vertical, Rotation3D.X_AXIS)
+        world_vector = Vector3D(x_rel, y_rel, z_rel)
+        relative_vector = world_vector.transform(y_rotation_matrix).transform(x_rotation_matrix)
 
-        # Perform vertical rotation (about x axis)
-        original_angle = math.atan(y_rel / z_rel)
-        rotation_angle = -self.camera.angle_vertical
-        distance = math.sqrt(z_rel ** 2 + y_rel ** 2)
-        y_rel = distance * math.sin(original_angle - rotation_angle)
-        z_rel = distance * math.cos(rotation_angle - original_angle)
+        # Don't attempt to render anytning that is behind the camera.
+        if relative_vector.z <= 0:
+            return None
 
-        # Use relative coordinates to find screen position
-        scale = 200 / z_rel
-        x_screen = int(WINDOW_WIDTH / 2 + scale * x_rel)
-        y_screen = int(WINDOW_HEIGHT / 2 + scale * y_rel)
+        # Project the coordinates, relative to the camera's viewpoint, onto the screen.
+        scale = RENDER_SIZE / relative_vector.z
+        x_screen = int(WINDOW_WIDTH / 2 + scale * relative_vector.x)
+        y_screen = int(WINDOW_HEIGHT / 2 + scale * relative_vector.y)
         return (x_screen, y_screen)
 
     def transform_camera(self):
